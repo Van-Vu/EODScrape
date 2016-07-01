@@ -1,19 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 using System.Net;
-using System.Diagnostics;
+using System.Text;
+using System.Web;
+using Newtonsoft.Json.Linq;
 
-namespace DownloadDataFromYahoo
+namespace YahooScrape
 {
     class Program
     {
         static void Main(string[] args)
         {
+            // http://www.codeproject.com/Articles/552378/Yahoo-e-splusYQLplusAPIplusandplusC-plusTu
+            // http://stackoverflow.com/questions/3840762/how-do-you-urlencode-without-using-system-web
+            // http://www.codeproject.com/Articles/42575/Yahoo-Managed
+
+            // http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22ACC%22)&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys
+            StringBuilder theWebAddress = new StringBuilder();
+            theWebAddress.Append("http://query.yahooapis.com/v1/public/yql?");
+            theWebAddress.Append("q=" + Uri.EscapeUriString("select * from yahoo.finance.quotes where symbol in (\"WBC.AX\",\"FET.AX\") and startDate = \"2016-06-30\" and endDate = \"2016-06-30\""));
+            theWebAddress.Append("&format=json");
+            theWebAddress.Append("&diagnostics=false");
+
+            string results = "";
+
+            using (WebClient wc = new WebClient())
+            {
+                results = wc.DownloadString(theWebAddress.ToString());
+            }
+
+            JObject dataObject = JObject.Parse(results);
+            JArray jsonArray = (JArray)dataObject["query"]["results"]["Result"];
+
+            foreach (var locationResult in jsonArray)
+            {
+                Console.WriteLine("Name:{0}", locationResult["Title"]);
+                Console.WriteLine("Address:{0}", locationResult["Address"]);
+                Console.WriteLine("Longitude:{0}", locationResult["Longitude"]);
+                Console.WriteLine("Latitude:{0}", locationResult["Latitude"]);
+                Console.WriteLine(Environment.NewLine);
+            }
+
+            Console.ReadLine();
+
+
+
             var baseLocation = ConfigurationManager.AppSettings["BaseLocation"];
 
             /// 
